@@ -15,7 +15,7 @@ BigInt::BigInt(int l, short s, vector<short> &arr){
 	sign = s;
 	digits.resize(length);
 	for (int i = 0; i < length; i++){
-		digits[i] = arr[i];
+		digits[length - i - 1] = arr[i];  //переворачиваем число
 	}
 }
 BigInt::BigInt(const BigInt& a){
@@ -33,92 +33,63 @@ int BigInt::len() const{
 	return length;
 }
 
-void BigInt::print(){
-    if (sign == -1)
-        cout << "-";
-	for (vector<short>::iterator it = digits.begin(); it != digits.end(); it++)
+void BigInt::print(){ 	
+	for (vector<short>::reverse_iterator it = digits.rbegin(); it != digits.rend(); it++) //чтобы пройти по вектору с конца к началу
 		cout << *it << " ";
+    cout << endl;
 }
 
-BigInt& BigInt::operator+=(const BigInt& t){ //must be changed
+BigInt& BigInt::operator+=(const BigInt& t){	
 	short remainder = 0;
-	short p;
-	int i, j;
-    if (t.length > length){
-        vector<short> c = t.digits;
-		i = length - 1;
-		j = t.length - 1;
-		for (i, j; i >= 0; i--, j--){
-			p = digits[i] + t.digits[j] + remainder;
-            c[j] = p % 10;
-			remainder = p / 10;
+	int maxLen = max(length, t.length);
+
+	for (int i = 0; i < maxLen || remainder; i++){
+		if (i == length){
+			digits.push_back(0);
+			length++;
 		}
-        if (remainder != 0)
-            c[t.length - length - 1] += remainder;
-        digits = c;
-	}
-	else{
-		i = t.length - 1;
-		j = length - 1;
-		for (i, j; i >= 0; i--, j--){
-			p = digits[j] + t.digits[i] + remainder;
-            digits[i] = p % 10;
-			remainder = p / 10;
-		}
-        if (remainder != 0)
-            digits.insert(digits.begin(), remainder);
+		digits[i] += remainder + (i < t.length ? t.digits[i] : 0);
+		remainder = digits[i] / 10;
+		if (remainder)  
+            digits[i] -= 10;
 	}
 	return *this;
 }
 
-BigInt& BigInt::operator-=(const BigInt& t){ //must be changed
-    short remainder = 0;
-    short p;
-    int i, j;
-    if (t.length > length || (t.length == length && digits[0] > t.digits[0])){
-        vector<short> c = t.digits;
-		i = length - 1;
-		j = t.length - 1;
-		for (i, j; i >= 0; i--, j--){
-            p = digits[i] - remainder;
-            if (p < t.digits[j]){
-                c[j] = p + 10 - t.digits[j];
-                remainder = 1;
-            }
-            else
-                c[j] = p - t.digits[j];
-		}
-        digits = c;
-	}
-	else{
-        sign = -1;
-        i = t.length - 1;
-		j = length - 1;
-		for (i, j; i >= 0; i--, j--){
-            p = t.digits[j] - remainder;
-            if (p < digits[i] && i != 0){
-                digits[j] = p + 10 - digits[i];
-                remainder = 1;
-            }
-            if (p >= digits[i]){
-                digits[j] = p - digits[i];
-                remainder = 0;
-            }
-            if (p < digits[i] && i == 0)
-                digits[j] = digits[i] - p;
-		}
-	}
-
-	return *this;
-}
-
-BigInt& BigInt::operator=(BigInt& t){
-	if (this == &t)
+BigInt& BigInt::operator*=(const BigInt& t){
+	if (length == 1 && digits[0] == 0 || t.length == 1 && t.digits[0] == 0){
+		length = 1;
+		digits.clear();
 		return *this;
-    digits.clear();
-    for (vector<short>::iterator h = t.digits.begin(); h != t.digits.end(); h++)
-        digits.push_back(*h);
-    length = t.length;
+	}
+	else{		
+		short remainder = 0;
+		vector<short> res;		
+		res.resize(length + t.length);
 
-    return *this;
+		for (int i = 0; i < length; i++)
+		for (int j = 0; j < t.length || remainder; j++){
+			short cur = res[i + j] + digits[i] * (j < t.length ? t.digits[j] : 0) + remainder;
+			res[i + j] = cur % 10;
+			remainder = cur / 10;
+		};
+				
+		length += t.length;
+		if (res.back() == 0){
+			res.pop_back();
+			length--;
+		}					
+		
+		digits = res;
+		return *this;
+	}
+}
+
+BigInt& BigInt::operator=(const BigInt& t){
+	length = t.length;
+	sign = t.sign;
+	digits.clear();
+	for (int i = 0; i < length; i++)
+		digits.push_back(t.digits[i]);
+	return *this;
 }
