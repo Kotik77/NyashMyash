@@ -8,7 +8,7 @@ using namespace std;
 
 class Date{
     bool leapyear;
-	int day, month, year;
+    int day, month, year;
     bool leap(int) const;
     int maxday() const;
 
